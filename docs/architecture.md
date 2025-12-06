@@ -12,18 +12,16 @@ This project uses a small, pragmatic full-stack architecture:
 ## Folder Structure (backend)
 
 ```bash
-
-src/
-controllers/ → receive requests, call services, send responses
-services/ → business logic, orchestrates models and utils
-models/ → Mongoose schemas and static/model methods
-routes/ → Express route definitions (route-level validation)
-middlewares/ → error handler, request logger, validation, auth (if added)
-utils/ → helpers (date formatting, filters, pagination)
-config/ → env config loader
-app.ts → express app setup (middlewares, routes)
-server.ts → starts the server
-
+src/backend/
+├── controllers/     → receive requests, call services, send responses
+├── services/        → business logic, orchestrates models and utils
+├── models/          → Mongoose schemas and static/model methods
+├── routes/          → Express route definitions (route-level validation)
+├── middlewares/     → error handler, request logger, validation, auth (if added)
+├── utils/           → helpers (date formatting, filters, pagination)
+├── config/          → env config loader
+├── app.ts           → express app setup (middlewares, routes)
+└── server.ts        → starts the server
 ```
 
 ## Data Models (high-level)
