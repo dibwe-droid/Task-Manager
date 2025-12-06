@@ -746,3 +746,10 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT token authentication (if auth is added)
+
+
+
+
+
+
+

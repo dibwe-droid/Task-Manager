@@ -38,3 +38,10 @@ This project is broken down into **8 sprints**, each designed to produce a worki
 | 8 | Polish & Deploy | Deployed app |
 
 For detailed tasks, deliverables, and acceptance criteria for each sprint, see the individual sprint files in the [sprints folder](sprints/).
+
+
+
+
+
+
+

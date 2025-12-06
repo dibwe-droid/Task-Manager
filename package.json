@@ -1,0 +1,25 @@
+{
+  "name": "task-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A full-stack Task Manager application",
+  "workspaces": [
+    "src/backend",
+    "src/frontend"
+  ],
+  "scripts": {
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+  },
+  "keywords": [
+    "task-manager",
+    "full-stack",
+    "typescript",
+    "react",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^3.7.4"
+  }
+}

@@ -9,7 +9,7 @@
 
 1. **API Service Layer**
    - Create `services/api.ts` or `services/taskApi.ts`
-   - Set up axios instance with base URL
+   - Set up fetch utility with base URL configuration
    - Create functions: `getTasks()`, `getTask(id)`, `createTask()`, `updateTask()`, `deleteTask()`
    - Add error handling for API calls
    - Create TypeScript interfaces matching backend models
@@ -86,3 +86,9 @@
 - [ ] TypeScript compiles without errors
 - [ ] Testing framework configured and working
 - [ ] Basic component tests pass
+
+
+
+
+
+

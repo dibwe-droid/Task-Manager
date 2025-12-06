@@ -105,3 +105,10 @@ By the end of Sprint 8, I should have:
 - ✅ Complete documentation
 - ✅ Professional UI/UX
 - ✅ Portfolio-ready project
+
+
+
+
+
+
+
