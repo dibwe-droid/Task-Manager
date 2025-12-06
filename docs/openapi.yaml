@@ -1,0 +1,748 @@
+openapi: 3.0.3
+info:
+  title: Task Manager API
+  description: |
+    A RESTful API for managing tasks, projects, and subtasks.
+    
+    Features:
+    - Full CRUD operations for tasks and projects
+    - Filtering and sorting capabilities
+    - Subtask management
+    - Project organization
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://api.example.com/api
+    description: Production server (update with actual URL)
+
+tags:
+  - name: Tasks
+    description: Task management operations
+  - name: Projects
+    description: Project management operations
+  - name: Subtasks
+    description: Subtask operations
+
+paths:
+  /tasks:
+    get:
+      tags:
+        - Tasks
+      summary: List tasks
+      description: Get a list of tasks with optional filtering, sorting, and pagination
+      parameters:
+        - name: projectId
+          in: query
+          description: Filter by project ID
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: Filter by tag
+          schema:
+            type: string
+        - name: completed
+          in: query
+          description: Filter by completion status
+          schema:
+            type: boolean
+        - name: priority
+          in: query
+          description: Filter by priority
+          schema:
+            type: string
+            enum: [low, medium, high]
+        - name: dueBefore
+          in: query
+          description: Filter tasks due before this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: sort
+          in: query
+          description: Sort field (prefix with - for descending)
+          schema:
+            type: string
+            enum: [dueDate, -dueDate, priority, -priority, createdAt, -createdAt]
+        - name: limit
+          in: query
+          description: Maximum number of tasks to return
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: skip
+          in: query
+          description: Number of tasks to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Tasks
+      summary: Create a new task
+      description: Create a new task with the provided data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+            examples:
+              basic:
+                summary: Basic task
+                value:
+                  title: "Buy groceries"
+                  description: "Milk, eggs, bread"
+                  priority: "medium"
+              withSubtasks:
+                summary: Task with subtasks
+                value:
+                  title: "Plan vacation"
+                  description: "Plan summer vacation"
+                  priority: "high"
+                  dueDate: "2025-07-01T00:00:00.000Z"
+                  tags: ["travel", "planning"]
+                  subtasks:
+                    - title: "Book flights"
+                    - title: "Reserve hotel"
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/{id}:
+    get:
+      tags:
+        - Tasks
+      summary: Get a single task
+      description: Retrieve a task by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Tasks
+      summary: Update a task
+      description: Update an existing task (partial updates supported)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete a task
+      description: Delete a task by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/{id}/subtasks:
+    post:
+      tags:
+        - Subtasks
+      summary: Add a subtask
+      description: Add a subtask to an existing task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  description: Subtask title
+      responses:
+        '201':
+          description: Subtask added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/{id}/subtasks/{subtaskId}:
+    put:
+      tags:
+        - Subtasks
+      summary: Update a subtask
+      description: Update an existing subtask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+        - name: subtaskId
+          in: path
+          required: true
+          description: Subtask ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                completed:
+                  type: boolean
+      responses:
+        '200':
+          description: Subtask updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task or subtask not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Subtasks
+      summary: Delete a subtask
+      description: Delete a subtask from a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+        - name: subtaskId
+          in: path
+          required: true
+          description: Subtask ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subtask deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task or subtask not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: List projects
+      description: Get a list of all projects
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+    post:
+      tags:
+        - Projects
+      summary: Create a new project
+      description: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /projects/{id}:
+    get:
+      tags:
+        - Projects
+      summary: Get a single project
+      description: Retrieve a project by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Projects
+      summary: Update a project
+      description: Update an existing project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Projects
+      summary: Delete a project
+      description: Delete a project by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Project deleted successfully
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - _id
+        - title
+        - completed
+        - createdAt
+        - updatedAt
+      properties:
+        _id:
+          type: string
+          description: Task ID
+          example: "64a1f2b3c4d5e6f7a8b9c0d1"
+        title:
+          type: string
+          description: Task title
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Task description
+          example: "Milk, eggs, onions"
+        dueDate:
+          type: string
+          format: date-time
+          description: Task due date
+          example: "2025-12-10T10:00:00.000Z"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          description: Task priority
+          example: "medium"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Task tags
+          example: ["shopping", "errands"]
+        completed:
+          type: boolean
+          description: Completion status
+          example: false
+        subtasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subtask'
+          description: List of subtasks
+        projectId:
+          type: string
+          description: Associated project ID
+          example: "64a2c3d4e5f6a7b8c9d0e1f2"
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-11-01T12:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-11-01T12:05:00.000Z"
+
+    Subtask:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+      properties:
+        id:
+          type: string
+          description: Subtask ID
+          example: "s1"
+        title:
+          type: string
+          description: Subtask title
+          example: "Buy milk"
+        completed:
+          type: boolean
+          description: Completion status
+          example: false
+
+    Project:
+      type: object
+      required:
+        - _id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        _id:
+          type: string
+          description: Project ID
+          example: "64a2c3d4e5f6a7b8c9d0e1f2"
+        name:
+          type: string
+          description: Project name
+          example: "Personal Tasks"
+        description:
+          type: string
+          description: Project description
+          example: "Tasks for personal projects"
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-11-01T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-11-01T10:00:00.000Z"
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: Task title (required)
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Task description
+          example: "Milk, eggs, onions"
+        dueDate:
+          type: string
+          format: date-time
+          description: Task due date
+          example: "2025-12-10T10:00:00.000Z"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          description: Task priority
+          example: "medium"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Task tags
+          example: ["shopping", "errands"]
+        subtasks:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+          description: Initial subtasks
+        projectId:
+          type: string
+          description: Associated project ID
+          example: "64a2c3d4e5f6a7b8c9d0e1f2"
+
+    UpdateTaskRequest:
+      type: object
+      description: All fields are optional for updates
+      properties:
+        title:
+          type: string
+          example: "Updated task title"
+        description:
+          type: string
+          example: "Updated description"
+        dueDate:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high]
+        tags:
+          type: array
+          items:
+            type: string
+        completed:
+          type: boolean
+        subtasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subtask'
+        projectId:
+          type: string
+
+    CreateProjectRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Project name (required)
+          example: "Personal Tasks"
+        description:
+          type: string
+          description: Project description
+          example: "Tasks for personal projects"
+
+    UpdateProjectRequest:
+      type: object
+      description: All fields are optional for updates
+      properties:
+        name:
+          type: string
+          example: "Updated project name"
+        description:
+          type: string
+          example: "Updated description"
+
+    TaskListResponse:
+      type: object
+      required:
+        - total
+        - limit
+        - skip
+        - tasks
+      properties:
+        total:
+          type: integer
+          description: Total number of tasks matching the query
+          example: 42
+        limit:
+          type: integer
+          description: Maximum number of tasks returned
+          example: 20
+        skip:
+          type: integer
+          description: Number of tasks skipped
+          example: 0
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum: [error]
+          example: "error"
+        message:
+          type: string
+          description: Error message
+          example: "Validation failed"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties:
+            type: string
+          example:
+            title: "Title is required"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication (if auth is added)

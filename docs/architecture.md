@@ -7,7 +7,7 @@ This project uses a small, pragmatic full-stack architecture:
 - Backend (Express + TypeScript + Mongoose) exposes REST endpoints.
 - Frontend (React + TypeScript) consumes the API.
 - Clear separation of concerns via Controller → Service → Model layers.
-- Centralized error handling and input validation (Zod or Joi).
+- Centralized error handling and input validation with Zod.
 
 ## Folder Structure (backend)
 
@@ -58,7 +58,8 @@ Errors bubble up to centralized error middleware which logs and returns standard
 - **Controller-Service pattern**: keeps controllers thin for easier testing.
 - **TypeScript**: static types for safer refactor and clearer interfaces.
 - **Mongoose**: schema-level validation and lean query helpers.
-- **Jest + Supertest**: fast feedback for API endpoints.
+- **Vitest + Supertest** (backend): fast feedback for API endpoints.
+- **Jest + React Testing Library** (frontend): component and integration testing.
 - **Pagination & Filtering**: implement simple `limit`, `skip`, and query-based filters.
 
 ## Extensibility notes
