@@ -20,6 +20,7 @@ const createTaskSchema = z.object({
   }, z.date().optional()),
   priority: z.enum(['low', 'medium', 'high']).optional(),
   tags: z.array(z.string()).optional(),
+  completed: z.boolean().optional(),
   subtasks: z
     .array(
       z.object({
@@ -53,6 +54,24 @@ const updateTaskSchema = z.object({
     )
     .optional(),
   projectId: z.string().optional(),
+});
+
+// Zod schema for creating a project
+const createProjectSchema = z.object({
+  name: z
+    .string({
+      required_error: 'Name is required',
+    })
+    .min(1, 'Name cannot be empty')
+    .max(200, 'Name cannot exceed 200 characters')
+    .trim(),
+  description: z.string().max(1000, 'Description cannot exceed 1000 characters').trim().optional(),
+});
+
+// Zod schema for updating a project
+const updateProjectSchema = z.object({
+  name: z.string().min(1, 'Name cannot be empty').max(200, 'Name cannot exceed 200 characters').trim().optional(),
+  description: z.string().max(1000, 'Description cannot exceed 1000 characters').trim().optional(),
 });
 
 /**
@@ -103,6 +122,70 @@ export const validateUpdateTask = (req: Request, res: Response, next: NextFuncti
       }));
 
       logger.warn('Validation failed for update task', { errors });
+
+      res.status(400).json({
+        status: 'error',
+        message: 'Validation failed',
+        details: errors.reduce((acc, err) => {
+          acc[err.field] = err.message;
+          return acc;
+        }, {} as Record<string, string>),
+      });
+      return;
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Validation middleware for creating a project
+ */
+export const validateProject = (req: Request, res: Response, next: NextFunction): void => {
+  try {
+    const validatedData = createProjectSchema.parse(req.body);
+    req.body = validatedData;
+    next();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errors = error.errors.map((err) => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+
+      logger.warn('Validation failed for create project', { errors });
+
+      res.status(400).json({
+        status: 'error',
+        message: 'Validation failed',
+        details: errors.reduce((acc, err) => {
+          acc[err.field] = err.message;
+          return acc;
+        }, {} as Record<string, string>),
+      });
+      return;
+    }
+
+    next(error);
+  }
+};
+
+/**
+ * Validation middleware for updating a project
+ */
+export const validateUpdateProject = (req: Request, res: Response, next: NextFunction): void => {
+  try {
+    const validatedData = updateProjectSchema.parse(req.body);
+    req.body = validatedData;
+    next();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errors = error.errors.map((err) => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+
+      logger.warn('Validation failed for update project', { errors });
 
       res.status(400).json({
         status: 'error',

@@ -91,6 +91,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskListResponse'
+              examples:
+                filtered:
+                  summary: Filtered tasks
+                  value:
+                    total: 5
+                    limit: 20
+                    skip: 0
+                    tasks:
+                      - _id: "64a1f2b3c4d5e6f7a8b9c0d1"
+                        title: "High priority task"
+                        priority: "high"
+                        completed: false
+                sorted:
+                  summary: Sorted tasks
+                  value:
+                    total: 10
+                    limit: 20
+                    skip: 0
+                    tasks:
+                      - _id: "64a1f2b3c4d5e6f7a8b9c0d1"
+                        title: "Task due soon"
+                        dueDate: "2025-12-01T10:00:00.000Z"
+                      - _id: "64a2f3c4d5e6f7a8b9c0d1e2"
+                        title: "Task due later"
+                        dueDate: "2025-12-15T10:00:00.000Z"
+                paginated:
+                  summary: Paginated tasks
+                  value:
+                    total: 50
+                    limit: 10
+                    skip: 20
+                    tasks:
+                      - _id: "64a1f2b3c4d5e6f7a8b9c0d1"
+                        title: "Task 21"
         '400':
           description: Bad request
           content:

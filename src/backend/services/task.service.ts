@@ -1,6 +1,8 @@
 import { Task, ITask } from '../models/task.model';
+import { Project } from '../models/project.model';
 import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
+import { buildTaskFilters, parseSort, parsePagination, TaskQueryParams } from '../utils/filter.util';
 
 export interface CreateTaskData {
   title: string;
@@ -8,6 +10,7 @@ export interface CreateTaskData {
   dueDate?: Date;
   priority?: 'low' | 'medium' | 'high';
   tags?: string[];
+  completed?: boolean;
   subtasks?: Array<{ title: string }>;
   projectId?: string;
 }
@@ -29,6 +32,16 @@ export class TaskService {
    */
   async createTask(data: CreateTaskData): Promise<ITask> {
     try {
+      // Validate projectId if provided
+      if (data.projectId) {
+        const project = await Project.findById(data.projectId);
+        if (!project) {
+          const error = new Error('Project not found');
+          (error as any).statusCode = 400;
+          throw error;
+        }
+      }
+
       // Convert subtasks with just title to full subtask objects
       const subtasks = data.subtasks?.map((subtask, index) => ({
         id: `s${Date.now()}-${index}`,
@@ -78,12 +91,39 @@ export class TaskService {
   }
 
   /**
-   * Get all tasks (basic implementation, no filters yet)
+   * Get all tasks with filtering, sorting, and pagination
    */
-  async getAllTasks(): Promise<ITask[]> {
+  async getAllTasks(queryParams: TaskQueryParams = {}): Promise<{
+    total: number;
+    limit: number;
+    skip: number;
+    tasks: ITask[];
+  }> {
     try {
-      const tasks = await Task.find().sort({ createdAt: -1 });
-      return tasks;
+      // Build filters
+      const filter = buildTaskFilters(queryParams);
+
+      // Parse pagination
+      const { limit, skip } = parsePagination(queryParams.limit, queryParams.skip);
+
+      // Parse sort
+      const sortOptions = parseSort(queryParams.sort);
+      const sort = sortOptions
+        ? { [sortOptions.field]: sortOptions.direction }
+        : { createdAt: -1 }; // Default sort
+
+      // Get total count (for pagination metadata)
+      const total = await Task.countDocuments(filter);
+
+      // Get tasks with filters, sort, and pagination
+      const tasks = await Task.find(filter).sort(sort).limit(limit).skip(skip);
+
+      return {
+        total,
+        limit,
+        skip,
+        tasks,
+      };
     } catch (error) {
       logger.error('Failed to get all tasks', error as Error);
       throw error;
@@ -95,6 +135,16 @@ export class TaskService {
    */
   async updateTask(id: string, data: UpdateTaskData): Promise<ITask> {
     try {
+      // Validate projectId if provided
+      if (data.projectId) {
+        const project = await Project.findById(data.projectId);
+        if (!project) {
+          const error = new Error('Project not found');
+          (error as any).statusCode = 400;
+          throw error;
+        }
+      }
+
       const task = await Task.findByIdAndUpdate(
         id,
         { ...data, updatedAt: new Date() },
@@ -112,7 +162,7 @@ export class TaskService {
       if (error instanceof mongoose.Error.CastError) {
         throw error;
       }
-      if ((error as Error).message === 'Task not found') {
+      if ((error as Error).message === 'Task not found' || (error as Error).message === 'Project not found') {
         throw error;
       }
       logger.error('Failed to update task', error as Error, { taskId: id });

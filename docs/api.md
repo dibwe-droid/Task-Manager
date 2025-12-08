@@ -60,18 +60,53 @@ Base URL: `/api`
 
 ### Query params
 
-- `projectId` — filter by project
-- `tag` — filter by tag (single)
-- `completed` — `true|false`
-- `priority` — `low|medium|high`
-- `dueBefore` — ISO date
-- `sort` — `dueDate|priority|createdAt` (prefix `-` for desc)
-- `limit` — integer
-- `skip` — integer
+- `projectId` — filter by project ID
+- `tag` — filter by tag (single tag)
+- `completed` — `true|false` — filter by completion status
+- `priority` — `low|medium|high` — filter by priority
+- `dueBefore` — ISO date string — filter tasks due before this date
+- `sort` — `dueDate|priority|createdAt` (prefix `-` for descending, e.g., `-dueDate`)
+- `limit` — integer (default: 20, max: 100) — maximum number of tasks to return
+- `skip` — integer (default: 0) — number of tasks to skip for pagination
+
+### Examples
+
+Filter by priority:
+```
+GET /api/tasks?priority=high
+```
+
+Filter by multiple criteria:
+```
+GET /api/tasks?completed=false&tag=work&priority=high
+```
+
+Sort by due date (descending):
+```
+GET /api/tasks?sort=-dueDate
+```
+
+Paginate results:
+```
+GET /api/tasks?limit=10&skip=0
+```
+
+Combined filtering, sorting, and pagination:
+```
+GET /api/tasks?priority=high&completed=false&sort=-dueDate&limit=10&skip=0
+```
 
 ### Responses
 
-- `200 OK` — `{ total: number, limit, skip, tasks: [...] }`
+- `200 OK` — returns paginated response:
+  ```json
+  {
+    "total": 42,
+    "limit": 20,
+    "skip": 0,
+    "tasks": [...]
+  }
+  ```
 
 ---
 
@@ -132,16 +167,100 @@ You can handle subtasks inline in `PUT /api/tasks/:id` or separate routes:
 
 ## Projects
 
+### Project object (example)
+
+```json
+{
+  "_id": "64a2c3...",
+  "name": "Personal Tasks",
+  "description": "Tasks for personal projects",
+  "createdAt": "2025-11-01T10:00:00.000Z",
+  "updatedAt": "2025-11-01T10:00:00.000Z"
+}
+```
+
+---
+
+### Create Project
+
 **POST** `/api/projects`
 
-- Body: `{ "name": "string", "description": "string" }`
-- `201 Created`
+#### Body
+
+```json
+{
+  "name": "string (required)",
+  "description": "string (optional)"
+}
+```
+
+#### Responses
+
+- `201 Created` — returns created project
+- `400 Bad Request` — validation errors
+
+---
+
+### List Projects
 
 **GET** `/api/projects`
 
-- `200 OK` — list of projects
+#### Responses
 
-**PUT** `/api/projects/:id`, **DELETE** `/api/projects/:id` — standard responses
+- `200 OK` — returns array of projects
+
+---
+
+### Get Single Project
+
+**GET** `/api/projects/:id`
+
+#### Responses
+
+- `200 OK` — returns project
+- `404 Not Found` — project not found
+
+---
+
+### Update Project
+
+**PUT** `/api/projects/:id`
+
+#### Body (partial or whole)
+
+```json
+{
+  "name": "string (optional)",
+  "description": "string (optional)"
+}
+```
+
+#### Responses
+
+- `200 OK` — returns updated project
+- `400 Bad Request` — validation errors
+- `404 Not Found` — project not found
+
+---
+
+### Delete Project
+
+**DELETE** `/api/projects/:id`
+
+#### Responses
+
+- `204 No Content` — project deleted
+- `404 Not Found` — project not found
+
+---
+
+## Task-Project Relationship
+
+Tasks can be associated with projects using the `projectId` field:
+
+- When creating or updating a task with `projectId`, the project must exist
+- If an invalid `projectId` is provided, the API returns `400 Bad Request` with message "Project not found"
+- Tasks can be filtered by `projectId` using the query parameter: `GET /api/tasks?projectId=<projectId>`
 
 ---
 
