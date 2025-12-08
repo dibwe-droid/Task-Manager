@@ -134,3 +134,5 @@ echo "💡 Tip: If you need to restore your original .zshrc, check the backup fi
 
 
 
+
+
