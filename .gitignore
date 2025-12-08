@@ -309,3 +309,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Git history rewrite scripts (temporary utility files)
+rewrite_author*.sh
+*rewrite*.sh
+REWRITE_INSTRUCTIONS.md
+*REWRITE*.md
